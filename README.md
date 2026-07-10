@@ -1,115 +1,455 @@
-# AeroDraft
+# ✈️ AeroDraft
+### AI-Powered Mid-Air CAD Sketching using Computer Vision
 
-Edge AI spatial visualization software for Indian MSME electrical hardware
-and lighting retailers. Uses only an ordinary webcam — no LiDAR, no
-ARCore, no SLAM, no Unity, no Unreal, no OpenGL.
+> Draw in the air using your hand. AeroDraft transforms natural hand gestures into precise 3D engineering sketches using Computer Vision, Gesture Recognition, and Real-Time Geometry Processing.
 
-## Current Status: Phase 1 — Foundational Pipeline
+---
 
-This repository currently implements **Phase 1 only**: camera capture and
-MediaPipe-based hand tracking. It intentionally does **not** yet include
-spatial mapping, projection, product rendering, or any of the other
-core algorithms referenced in the project's design documentation
-(Adaptive Spatial Mapping Engine, Relative Pixel Scaling, Lux Check,
-Projection Logic, Anchor Logic). Those are future phases and are out of
-scope for this code.
+<p align="center">
 
-### What Phase 1 does
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-Tasks-orange)
+![License](https://img.shields.io/badge/License-MIT-red)
+![Status](https://img.shields.io/badge/Status-Active%20Development-success)
 
-1. Opens a webcam via OpenCV.
-2. Runs MediaPipe Hands on each frame to detect hand landmarks.
-3. Draws the detected landmarks on screen so the pipeline can be
-   visually verified end to end.
+</p>
 
-That's it. No spatial reasoning, no object placement, no filtering
-pipeline beyond what MediaPipe does internally.
-## Phase 2: Integrated Pipeline
-This phase integrates the core ASME and rendering engines into the main loop:
-1. **Hand Tracking**: Extracts wrist coordinates.
-2. **DepthEstimation**: Computes the Z-coordinate proxy using the ASME heuristic (relative pixel scaling).
-3. **Filtering**: Applies the 1-Euro Filter to stabilize the Z value.
-4. **Projection**: Maps the 3D cuboid coordinates into 2D screen space using perspective projection.
-5. **Rendering**: Draws the resulting wireframe on the live webcam feed.
+---
 
-## Project Structure
+# Overview
+
+AeroDraft is an AI-assisted Human-Computer Interaction (HCI) system that allows engineers and designers to create virtual CAD sketches using only hand gestures in front of a webcam.
+
+Instead of relying on traditional mouse-and-keyboard interaction, AeroDraft interprets hand landmarks, classifies gestures, estimates depth, smooths motion, and renders engineering geometry in real time.
+
+The project combines:
+
+- Computer Vision
+- Gesture Recognition
+- Real-Time Geometry
+- Human Computer Interaction
+- Signal Processing
+- Engineering Graphics
+
+---
+
+# Key Features
+
+- Real-time hand tracking
+- Gesture recognition
+- Motion smoothing
+- Relative depth estimation
+- Perspective projection
+- Wireframe CAD rendering
+- Modular architecture
+- Unit-tested core mathematics
+- Extensible gesture pipeline
+
+---
+
+# Current Development Status
+
+| Module | Status |
+|---------|--------|
+| Camera Pipeline | ✅ Complete |
+| MediaPipe Tracking | ✅ Complete |
+| Landmark Detection | ✅ Complete |
+| One Euro Filter | ✅ Complete |
+| Relative Depth Estimation | ✅ Complete |
+| Perspective Projection | ✅ Complete |
+| Wireframe Renderer | ✅ Complete |
+| Gesture Classifier | ✅ Complete |
+| Gesture State Machine | ✅ Complete |
+| Coordinate Filtering | ✅ Complete |
+| Pipeline Integration | ✅ Complete |
+| HUD Overlay | 🚧 In Progress |
+| Object Manipulation | 🚧 Planned |
+| Air Sketch Mode | 🚧 Planned |
+| CAD Export | 🚧 Planned |
+
+---
+
+# Working Architecture
+
+```text
+                     Webcam
+                        │
+                        ▼
+               OpenCV Video Capture
+                        │
+                        ▼
+             MediaPipe Hand Landmarker
+                        │
+                        ▼
+              21 Hand Landmarks (3D)
+                        │
+        ┌───────────────┴───────────────┐
+        ▼                               ▼
+ Gesture Classifier            Coordinate Filter
+        │                               │
+        ▼                               ▼
+ Gesture State Machine        One Euro Filter
+        │                               │
+        └───────────────┬───────────────┘
+                        ▼
+               Relative Depth Estimator
+                        │
+                        ▼
+              3D Hand Position Estimation
+                        │
+                        ▼
+             Perspective Projection Engine
+                        │
+                        ▼
+             Wireframe CAD Renderer
+                        │
+                        ▼
+                 OpenCV Display Window
+```
+
+---
+
+# Repository Structure
 
 ```
 AeroDraft/
-├── aerodraft/
-│   ├── main.py                # Entry point: wires camera + hand tracker together
-│   ├── config/
-│   │   └── settings.py        # Environment-driven configuration (no hardcoded values)
-│   ├── core/
-│   │   ├── camera.py          # CameraCapture: webcam lifecycle only
-│   │   ├── hand_tracker.py    # HandTracker: MediaPipe Hands wrapper
-│   │   ├── data_types.py      # Shared dataclasses (HandDetectionResult, etc.)
-│   │   ├── visualization.py   # Landmark drawing for visual verification
-│   │   └── exceptions.py      # AeroDraft-specific exception hierarchy
-│   └── utils/
-│       └── logger.py          # Centralized Loguru configuration
-├── tests/                     # Unit tests (pytest)
+│
+├── camera.py
+├── config.py
+├── hand_tracker.py
+├── main.py
 ├── requirements.txt
-├── requirements-dev.txt
-└── pyproject.toml
+│
+├── core/
+│   ├── coordinate_filter.py
+│   ├── depth_estimator.py
+│   └── one_euro_filter.py
+│
+├── engine/
+│   ├── projection.py
+│   └── wireframe_renderer.py
+│
+├── gestures/
+│   ├── gesture_classifier.py
+│   └── state_machine.py
+│
+├── ui/
+│   └── hud_renderer.py
+│
+├── tests/
+│
+└── README.md
 ```
 
-## Setup
+---
+
+# Processing Pipeline
+
+## Step 1 — Video Capture
+
+The webcam continuously captures RGB frames using OpenCV.
+
+↓
+
+## Step 2 — Hand Tracking
+
+MediaPipe Tasks detects:
+
+- 21 landmarks
+- Hand confidence
+- Handedness
+
+↓
+
+## Step 3 — Gesture Recognition
+
+The Gesture Classifier recognizes:
+
+- Neutral
+- Pinch
+- Pointing
+- Open Palm
+
+↓
+
+## Step 4 — State Machine
+
+The State Machine converts raw frame-level gestures into stable interaction states.
+
+Example:
+
+```
+Neutral
+   │
+Pinch Start
+   │
+Dragging
+   │
+Pinch Release
+   │
+Idle
+```
+
+↓
+
+## Step 5 — Coordinate Filtering
+
+Hand coordinates are smoothed using:
+
+- One Euro Filter
+- Temporal Filtering
+
+↓
+
+## Step 6 — Depth Estimation
+
+Relative Pixel Scaling estimates approximate hand depth from camera.
+
+↓
+
+## Step 7 — Projection
+
+The Projection Engine converts
+
+```
+3D World Coordinates
+
+↓
+
+2D Screen Coordinates
+```
+
+using the pinhole camera model.
+
+↓
+
+## Step 8 — Rendering
+
+The Renderer draws
+
+- Cuboids
+- Engineering wireframes
+- Reference axes
+- Interactive objects
+
+using OpenCV.
+
+---
+
+# Gesture Recognition
+
+| Gesture | Purpose |
+|----------|----------|
+| Neutral | Idle |
+| Pinch | Select / Grab |
+| Pointing | Cursor |
+| Open Palm | Reset / Cancel |
+
+---
+
+# Technologies Used
+
+### Computer Vision
+
+- OpenCV
+
+### AI / Vision
+
+- MediaPipe Tasks API
+
+### Mathematics
+
+- Linear Algebra
+- Vector Geometry
+- Euclidean Distance
+- Perspective Projection
+
+### Signal Processing
+
+- One Euro Filter
+
+### Programming
+
+- Python
+
+### Testing
+
+- PyTest
+
+---
+
+# Installation
+
+Clone the repository
+
+```bash
+git clone https://github.com/Anushath15/AeroDraft.git
+
+cd AeroDraft
+```
+
+Create virtual environment
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements-dev.txt
-pip install -e .
 ```
 
-## Running
+Activate
+
+Windows
 
 ```bash
-python -m aerodraft.main
+.venv\Scripts\activate
 ```
 
-A window will open showing the webcam feed with hand landmarks overlaid.
-Press `q` to quit.
+Linux / macOS
 
-### Configuration
+```bash
+source .venv/bin/activate
+```
 
-All configuration is via environment variables (see
-`aerodraft/config/settings.py` for the full list and defaults). Examples:
+Install dependencies
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `AERODRAFT_CAMERA_INDEX` | `0` | Which camera device to open |
-| `AERODRAFT_FRAME_WIDTH` | `1280` | Requested capture width |
-| `AERODRAFT_FRAME_HEIGHT` | `720` | Requested capture height |
-| `AERODRAFT_MAX_NUM_HANDS` | `2` | Max hands MediaPipe will track |
-| `AERODRAFT_MIN_DETECTION_CONFIDENCE` | `0.5` | MediaPipe detection threshold |
-| `AERODRAFT_LOG_DIR` | `logs` | Where log files are written (relative path) |
+```bash
+pip install -r requirements.txt
+```
 
-No paths or device settings are hardcoded in the application code itself.
+---
 
-## Testing
+# MediaPipe Model
+
+Download the MediaPipe Hand Landmarker model.
+
+Place it in the project root as
+
+```
+hand_landmarker.task
+```
+
+The directory should look like
+
+```
+AeroDraft/
+
+hand_landmarker.task
+main.py
+camera.py
+config.py
+...
+```
+
+> **Note:** `hand_landmarker.task` is intentionally excluded from Git because it is a large third-party model file.
+
+---
+
+# Running
+
+```bash
+python main.py
+```
+
+---
+
+# Running Tests
 
 ```bash
 pytest
 ```
 
-Camera tests mock `cv2.VideoCapture` and run without a physical webcam.
-Hand tracker tests run real MediaPipe inference against deterministic
-blank frames (no camera or real hand required).
+---
 
-## Known Limitations (Phase 1)
+# Engineering Principles
 
-- `mediapipe` is pinned to `<0.10.15` because this module uses the legacy
-  `mediapipe.solutions.hands` API. MediaPipe removed that API in later
-  0.10.2x+ releases in favor of the new Tasks API
-  (`mediapipe.tasks.python.vision.HandLandmarker`), which requires
-  downloading a separate `.task` model file at runtime. Migrating to the
-  Tasks API is a reasonable future change but is out of scope for this
-  phase; pinning keeps the current code working with `pip install`.
-- No spatial mapping, depth estimation, or projection — this phase only
-  proves that camera capture + hand detection work together reliably.
-- No lighting-adequacy check ("Lux Check") is implemented yet.
-- No gesture-to-action mapping is implemented yet; landmarks are detected
-  and drawn, but not interpreted as commands.
-- Performance (FPS/CPU/memory) on "legacy showroom computers" has not
-  been benchmarked in this phase.
+The project follows
+
+- Modular Design
+- Separation of Concerns
+- Dependency Isolation
+- Immutable Configuration
+- Test-Driven Development
+- Clean Architecture
+
+Each module has a single responsibility and can be independently tested.
+
+---
+
+# Future Roadmap
+
+### Phase 1
+- ✅ Hand Tracking
+
+### Phase 2
+- ✅ Gesture Recognition
+
+### Phase 3
+- ✅ Spatial Coordinate Processing
+
+### Phase 4
+- 🚧 Interactive Object Placement
+
+### Phase 5
+- 🚧 Mid-Air Sketching
+
+### Phase 6
+- 🚧 Engineering Constraints
+
+### Phase 7
+- 🚧 CAD File Export
+
+### Phase 8
+- 🚧 Multi-Hand Collaboration
+
+### Phase 9
+- 🚧 AI-Assisted Sketch Completion
+
+---
+
+# Contributing
+
+1. Fork the repository
+
+2. Create a feature branch
+
+```bash
+git checkout -b feature/new-feature
+```
+
+3. Commit your changes
+
+```bash
+git commit -m "Add new feature"
+```
+
+4. Push
+
+```bash
+git push origin feature/new-feature
+```
+
+5. Open a Pull Request
+
+---
+
+# License
+
+This project is released under the MIT License.
+
+---
+
+# Author
+
+**Anushath S**
+
+Computer Science & Engineering
+
+AI / Machine Learning Enthusiast
+
+GitHub:
+https://github.com/Anushath15
+
+---
+
+## Vision
+
+> **"AeroDraft aims to redefine engineering design by enabling intuitive, touch-free 3D sketching through AI-powered hand interaction—bridging the gap between human creativity and digital CAD systems."**

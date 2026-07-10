@@ -12,41 +12,10 @@ from __future__ import annotations
 import math
 from enum import Enum, auto
 from typing import Any, Sequence
-from config import GestureConfig
 from collections import deque
 import numpy as np
-from typing import Any
 
-
-class GestureClassifier:
-    def __init__(self, config: GestureConfig):
-        self.config = config
-        self.history = deque(maxlen=config.frame_history_len)
-        self.is_pinched = False
-
-    def is_pinch(self, wrist: Any, index_mcp: Any, index_tip: Any, thumb_tip: Any) -> bool:
-        """Public API: Detects pinch gesture with hysteresis."""
-        return self._detect_pinch(wrist, index_mcp, index_tip, thumb_tip)
-
-    def _detect_pinch(self, wrist: Any, index_mcp: Any, index_tip: Any, thumb_tip: Any) -> bool:
-        """Internal logic for hysteresis pinch detection."""
-        pinch_dist = np.linalg.norm(np.array([thumb_tip.x, thumb_tip.y]) - np.array([index_tip.x, index_tip.y]))
-        ref_dist = np.linalg.norm(np.array([wrist.x, wrist.y]) - np.array([index_mcp.x, index_mcp.y]))
-        
-        ratio = pinch_dist / (ref_dist + 1e-6)
-        self.history.append(ratio)
-        
-        if len(self.history) < self.config.frame_history_len:
-            return self.is_pinched
-
-        avg_ratio = sum(self.history) / len(self.history)
-        
-        if not self.is_pinched and avg_ratio < self.config.pinch_start_threshold:
-            self.is_pinched = True
-        elif self.is_pinched and avg_ratio > self.config.pinch_release_threshold:
-            self.is_pinched = False
-            
-        return self.is_pinched
+from config import GestureConfig
 
 
 class GestureType(Enum):
@@ -86,6 +55,8 @@ class GestureClassifier:
             config: Gesture classification threshold configuration.
         """
         self._config = config
+        self._pinch_history: deque[float] = deque(maxlen=config.frame_history_len)
+        self._is_pinched: bool = False
 
     def classify(self, landmarks: Sequence[Any]) -> GestureType:
         """
@@ -140,6 +111,47 @@ class GestureClassifier:
             return GestureType.OPEN_PALM
 
         return GestureType.NONE
+
+    def is_pinch(self, wrist: Any, index_mcp: Any, index_tip: Any, thumb_tip: Any) -> bool:
+        """
+        Hysteresis-based pinch detection for external consumers.
+
+        Uses a sliding window of frame_history_len frames to smooth the
+        thumb-to-index-tip distance ratio before applying thresholds.
+
+        Args:
+            wrist: Landmark object with .x, .y attributes.
+            index_mcp: Index finger MCP joint landmark.
+            index_tip: Index finger tip landmark.
+            thumb_tip: Thumb tip landmark.
+
+        Returns:
+            True if pinch is active (with hysteresis), False otherwise.
+        """
+        pinch_dist = np.linalg.norm(
+            np.array([thumb_tip.x, thumb_tip.y]) - np.array([index_tip.x, index_tip.y])
+        )
+        ref_dist = np.linalg.norm(
+            np.array([wrist.x, wrist.y]) - np.array([index_mcp.x, index_mcp.y])
+        )
+
+        if ref_dist <= 0:
+            return self._is_pinched  # Maintain previous state on invalid input
+
+        ratio = pinch_dist / ref_dist
+        self._pinch_history.append(ratio)
+
+        if len(self._pinch_history) < self._config.frame_history_len:
+            return self._is_pinched
+
+        avg_ratio = sum(self._pinch_history) / len(self._pinch_history)
+
+        if not self._is_pinched and avg_ratio < self._config.pinch_start_threshold:
+            self._is_pinched = True
+        elif self._is_pinched and avg_ratio > self._config.pinch_release_threshold:
+            self._is_pinched = False
+
+        return self._is_pinched
 
     def _average_fingertip_extension_ratio(
         self, landmarks: Sequence[Any], hand_size: float
