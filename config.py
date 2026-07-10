@@ -4,6 +4,7 @@ All hardcoded values live here as immutable frozen dataclasses.
 No other module should define magic numbers.
 """
 from dataclasses import dataclass, field
+from typing import Tuple
 
 
 @dataclass(frozen=True)
@@ -34,12 +35,21 @@ class ASMEConfig:
 
 
 @dataclass(frozen=True)
+class RenderConfig:
+    """Settings for the wireframe render engine."""
+    focal_length: float = 500.0
+    box_color_bgr: Tuple[int, int, int] = (0, 255, 255)
+    line_thickness: int = 2
+
+
+@dataclass(frozen=True)
 class AppConfig:
     """Global application settings."""
     window_name: str = "AeroDraft"
     camera: CameraConfig = field(default_factory=CameraConfig)
     tracker: TrackerConfig = field(default_factory=TrackerConfig)
     asme: ASMEConfig = field(default_factory=ASMEConfig)
+    render: RenderConfig = field(default_factory=RenderConfig)
 
 
 # Global singleton - import this everywhere
