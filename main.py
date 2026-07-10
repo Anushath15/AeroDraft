@@ -3,7 +3,7 @@ AeroDraft - Master entry point.
 Orchestrates the complete pipeline:
     Camera -> Hand Tracking -> Gesture Classification -> State Machine
     -> Depth Estimation -> Coordinate Smoothing -> 3D Projection
-    -> Wireframe Rendering -> HUD Overlay -> Display
+    -> Object Rendering -> HUD Overlay -> Display
 """
 from __future__ import annotations
 
@@ -16,12 +16,13 @@ import cv2
 import numpy as np
 from loguru import logger
 
+from engine.catalog import ProductCatalog
 from config import settings
 from camera import VideoStream
 from hand_tracker import HandTracker
 from core.depth_estimator import DepthEstimator, NoHandDetectedError
 from engine.projection import PerspectiveProjector, InvalidDepthError
-from engine.wireframe_renderer import WireframeRenderer
+from engine.object_renderer import ObjectRenderer
 from gestures.gesture_classifier import GestureClassifier, GestureType
 from gestures.state_machine import GestureStateMachine, BoxState
 from ui.hud_renderer import HUDRenderer, HUDData
@@ -85,17 +86,14 @@ def _extract_hand_position(
 
 def main() -> None:
     """Runs the integrated AeroDraft application loop."""
-    logger.info("AeroDraft starting - Phase 10 (Full Integration)")
+    logger.info("AeroDraft starting - Phase 12 (MSME Demo Experience)")
     
     # Validate configuration before opening hardware
     _validate_config()
 
     # -- Initialize subsystems --
     hud_renderer = HUDRenderer(settings.hud)
-    wireframe_renderer = WireframeRenderer(
-        color=settings.render.box_color_bgr,
-        thickness=settings.render.line_thickness,
-    )
+    object_renderer = ObjectRenderer(settings.render.default_object)
     projector = PerspectiveProjector(
         focal_length=settings.render.focal_length,
         frame_width=settings.camera.width,
@@ -104,6 +102,18 @@ def main() -> None:
     depth_estimator = DepthEstimator(settings.asme)
     gesture_classifier = GestureClassifier(settings.gesture)
     state_machine = GestureStateMachine(settings.state_machine)
+
+    # Phase 12: Track current object type for HUD (persists when hand is lost)
+    current_object_type = settings.render.default_object
+
+    # Phase 12: State transition notification tracking
+    _previous_state = BoxState.IDLE
+    _notification_text: Optional[str] = None
+    _notification_color: Optional[Tuple[int, int, int]] = None
+    _notification_frames_remaining = 0
+
+    # Phase 12: Track hand presence for tracking lost/restored notifications
+    _was_tracking = False
 
     coordinate_filter: Optional[Any] = None
     if _HAS_COORDINATE_FILTER:
@@ -118,6 +128,8 @@ def main() -> None:
     frame_count_for_fps = 0
     fps_update_interval = 0.5  # seconds
     last_frame_time = time.perf_counter()
+    last_fps_update_time = time.perf_counter()
+    
 
     try:
         with VideoStream(
@@ -127,6 +139,7 @@ def main() -> None:
         ) as stream, HandTracker(config=settings.tracker) as tracker:
 
             logger.info("Pipeline active. Press Q or ESC to exit.")
+            logger.info("Keys: 1-7 switch objects | D toggle demo panel")
 
             while True:
                 # 1. Read frame
@@ -150,11 +163,12 @@ def main() -> None:
                     frame_count_for_fps += 1
                 
                 # Update displayed FPS periodically
-                if current_time - last_frame_time >= fps_update_interval:
+                if current_time - last_fps_update_time >= fps_update_interval:
                     if frame_count_for_fps > 0:
                         fps = frame_time_accumulator / frame_count_for_fps
                     frame_time_accumulator = 0.0
                     frame_count_for_fps = 0
+                    last_fps_update_time = current_time
 
                 # 2. Detect hand
                 with benchmark("hand_tracking"):
@@ -166,26 +180,75 @@ def main() -> None:
                     else None
                 )
 
+                hand_detected = hand_landmarks is not None
+
+                # Phase 12: Tracking lost / restored notifications
+                if hand_detected and not _was_tracking:
+                    _notification_text = "TRACKING RESTORED"
+                    _notification_color = (0, 255, 0)
+                    _notification_frames_remaining = settings.hud.notification_duration_frames
+                elif not hand_detected and _was_tracking:
+                    _notification_text = "HAND LOST"
+                    _notification_color = (0, 0, 255)
+                    _notification_frames_remaining = settings.hud.notification_duration_frames
+                _was_tracking = hand_detected
+
                 # 3. No hand detected
-                if hand_landmarks is None:
+                if not hand_detected:
                     # Debounce: only reset if not already IDLE
                     if (hasattr(state_machine, 'reset') and 
                         hasattr(state_machine, 'current_state') and
                         state_machine.current_state != BoxState.IDLE):
                         state_machine.reset()
+                        # Phase 12: Track the reset for notifications
+                        if _previous_state == BoxState.LOCKED:
+                            _notification_text = "OBJECT RESET"
+                            _notification_color = (128, 128, 128)
+                            _notification_frames_remaining = settings.hud.notification_duration_frames
+                        _previous_state = BoxState.IDLE
+                    
                     depth_estimator.reset()
+
+                    # Phase 12: Look up product info for HUD
+                    product = ProductCatalog.get(current_object_type)
+                    category = product.category if product else "Unknown"
 
                     hud_data = HUDData(
                         tracking=False,
+                        object_type=current_object_type,
+                        category=category,
                         fps=fps,
+                        notification=_notification_text,
+                        notification_color=_notification_color,
+                        demo_mode=settings.demo.enabled,
                     )
                     annotated = hud_renderer.render(frame.copy(), hud_data)
                     cv2.imshow(settings.window_name, annotated)
 
                     key = cv2.waitKey(1) & 0xFF
+                elif key == ord("d"):
+                    # Toggle demo mode at runtime
+                    from config import DemoConfig
+                    new_demo = DemoConfig(
+                        enabled=not settings.demo.enabled,
+                        show_help_panel=True,
+                    )
+                    # Note: AppConfig is frozen, so we recreate it
+                    import dataclasses
+                    global settings
+                    settings = dataclasses.replace(settings, demo=new_demo)
+                    logger.info(f"Demo mode: {'ON' if settings.demo.enabled else 'OFF'}")
                     if key == ord("q") or key == 27:
                         logger.info("Exit signal received.")
                         break
+                    
+                    # Phase 12: Decay notification timer even when no hand
+                    if _notification_frames_remaining > 0:
+                        _notification_frames_remaining -= 1
+                    else:
+                        _notification_text = None
+                        _notification_color = None
+                    
                     continue
 
                 # 4. Gesture classification
@@ -243,7 +306,30 @@ def main() -> None:
                         logger.warning(f"State machine update failed: {e}")
                         current_state = state_machine.current_state
 
-                # 8-9. Project 3D cube if a box exists
+                # Phase 12: Detect state transitions for notifications
+                if current_state != _previous_state:
+                    if current_state == BoxState.PLACED:
+                        _notification_text = "OBJECT PLACED"
+                        _notification_color = (0, 255, 0)  # Green
+                        _notification_frames_remaining = settings.hud.notification_duration_frames
+                    elif current_state == BoxState.LOCKED:
+                        _notification_text = "OBJECT LOCKED"
+                        _notification_color = (255, 0, 0)  # Blue
+                        _notification_frames_remaining = settings.hud.notification_duration_frames
+                    elif current_state == BoxState.IDLE and _previous_state == BoxState.LOCKED:
+                        _notification_text = "OBJECT RESET"
+                        _notification_color = (128, 128, 128)  # Gray
+                        _notification_frames_remaining = settings.hud.notification_duration_frames
+                    _previous_state = current_state
+
+                # Phase 12: Decay notification timer
+                if _notification_frames_remaining > 0:
+                    _notification_frames_remaining -= 1
+                else:
+                    _notification_text = None
+                    _notification_color = None
+
+                # 8-9. Project 3D object if a box exists
                 with benchmark("projection_rendering"):
                     if (current_state != BoxState.IDLE and 
                         hasattr(state_machine, 'current_box_center') and 
@@ -255,11 +341,28 @@ def main() -> None:
                                 settings.state_machine.default_box_half_extents
                             )
                             projected = projector.project_box(center, half_extents)
-                            wireframe_renderer.draw_box(frame, projected)
+                            
+                            # Phase 12: State-based color and selection highlight
+                            state_color = settings.render.state_colors.get(
+                                current_state.name, settings.render.box_color_bgr
+                            )
+                            highlight = current_state in (BoxState.DRAWING, BoxState.PLACED)
+                            
+                            object_renderer.render(
+                                frame,
+                                current_object_type,
+                                projected,
+                                color=state_color,
+                                highlight=highlight,
+                            )
                         except InvalidDepthError as e:
                             logger.debug(f"Projection skipped - box behind camera: {e}")
                         except Exception as e:
-                            logger.warning(f"Wireframe rendering failed: {e}")
+                            logger.warning(f"Object rendering failed: {e}")
+
+                # Phase 12: Catalog lookup for HUD
+                product = ProductCatalog.get(current_object_type)
+                category = product.category if product else "Unknown"
 
                 # 10. Render HUD
                 with benchmark("hud_render"):
@@ -267,20 +370,40 @@ def main() -> None:
                         tracking=True,
                         gesture=gesture,
                         state=current_state,
+                        object_type=current_object_type,
+                        category=category,
                         fps=fps,
                         depth=smoothed_depth,
                         hand_position=(hand_px, hand_py),
+                        notification=_notification_text,
+                        notification_color=_notification_color,
+                        demo_mode=settings.demo.enabled,
                     )
                     annotated = hud_renderer.render(frame, hud_data)
 
                 # 11. Display
                 cv2.imshow(settings.window_name, annotated)
 
-                # 12. Exit check
+                # 12. Exit check + optional object switching keys
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord("q") or key == 27:
                     logger.info("Exit signal received.")
                     break
+                # Phase 12: Number keys switch objects for demo flexibility
+                elif key == ord("1"):
+                    current_object_type = "cube"
+                elif key == ord("2"):
+                    current_object_type = "switchboard"
+                elif key == ord("3"):
+                    current_object_type = "socket"
+                elif key == ord("4"):
+                    current_object_type = "ceiling_light"
+                elif key == ord("5"):
+                    current_object_type = "junction_box"
+                elif key == ord("6"):
+                    current_object_type = "conduit_box"
+                elif key == ord("7"):
+                    current_object_type = "distribution_board"
 
     except KeyboardInterrupt:
         logger.info("Interrupted by user (Ctrl+C).")

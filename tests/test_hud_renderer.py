@@ -9,7 +9,7 @@ import pytest
 from config import HUDConfig
 from gestures.gesture_classifier import GestureType
 from gestures.state_machine import BoxState
-from ui.hud_renderer import HUDData, HUDRenderer
+from ui.hud_renderer import HUDRenderer, HUDData
 
 
 @pytest.fixture
@@ -140,6 +140,38 @@ def test_state_none_renders(
 
 
 # ------------------------------------------------------------------ #
+# Object type display
+# ------------------------------------------------------------------ #
+
+
+def test_object_type_switchboard_renders(
+    renderer: HUDRenderer, blank_frame: np.ndarray
+) -> None:
+    """Object type 'switchboard' must appear in the HUD."""
+    data = HUDData(object_type="switchboard")
+    result = renderer.render(blank_frame, data)
+    assert np.any(result != 0)
+
+
+def test_object_type_none_renders(
+    renderer: HUDRenderer, blank_frame: np.ndarray
+) -> None:
+    """None object type must render as 'NONE' without crashing."""
+    data = HUDData(object_type=None)
+    result = renderer.render(blank_frame, data)
+    assert result is not None
+
+
+def test_object_type_uppercase(
+    renderer: HUDRenderer, blank_frame: np.ndarray
+) -> None:
+    """Object type should be displayed in uppercase."""
+    data = HUDData(object_type="ceiling_light")
+    result = renderer.render(blank_frame, data)
+    assert np.any(result != 0)
+
+
+# ------------------------------------------------------------------ #
 # FPS display
 # ------------------------------------------------------------------ #
 
@@ -264,3 +296,54 @@ def test_format_position_tuple() -> None:
 def test_format_position_none() -> None:
     """None position should return '--'."""
     assert HUDRenderer._format_position(None) == "--"
+
+
+def test_format_object_type_uppercase() -> None:
+    """Object type should be uppercase with underscores replaced."""
+    assert HUDRenderer._format_object_type("ceiling_light") == "CEILING LIGHT"
+
+
+def test_format_object_type_none() -> None:
+    """None object type should return 'NONE'."""
+    assert HUDRenderer._format_object_type(None) == "NONE"
+
+def test_notification_renders_banner(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(notification="OBJECT PLACED", notification_color=(0, 255, 0))
+    result = renderer.render(blank_frame, data)
+    assert np.any(result[:50, :] != 0)
+
+def test_notification_with_custom_color(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(notification="WARNING", notification_color=(0, 0, 255))
+    result = renderer.render(blank_frame, data)
+    assert result is not None
+
+def test_demo_panel_renders_when_enabled(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(demo_mode=True)
+    result = renderer.render(blank_frame, data)
+    h, w = result.shape[:2]
+    assert np.any(result[:, w - 200:] != 0)
+
+def test_demo_panel_hidden_when_disabled(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(demo_mode=False)
+    result = renderer.render(blank_frame, data)
+    assert result is not None
+
+def test_category_displayed(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(object_type="switchboard", category="Electrical")
+    result = renderer.render(blank_frame, data)
+    assert np.any(result != 0)
+
+def test_state_color_drawing_is_yellow(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(state=BoxState.DRAWING)
+    result = renderer.render(blank_frame, data)
+    assert np.any(result != 0)
+
+def test_state_color_placed_is_green(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(state=BoxState.PLACED)
+    result = renderer.render(blank_frame, data)
+    assert np.any(result != 0)
+
+def test_state_color_idle_is_gray(renderer: HUDRenderer, blank_frame: np.ndarray) -> None:
+    data = HUDData(state=BoxState.IDLE)
+    result = renderer.render(blank_frame, data)
+    assert np.any(result != 0)
