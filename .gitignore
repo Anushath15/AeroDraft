@@ -1,9 +1,6 @@
-.venv/
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
-*.egg-info/
-dist/
-build/
-
-hand_landmarker.task
+.venv/
+.coverage
+htmlcov/
