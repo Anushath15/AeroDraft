@@ -229,3 +229,25 @@ def test_small_face_skips_detail(sample_box_points: np.ndarray) -> None:
     for r in renderers:
         result = r.draw(frame.copy(), tiny_points)
         assert result is not None  # Should not crash
+
+def test_distribution_board_renderer_draws_on_frame() -> None:
+    """DistributionBoardRenderer must draw onto the frame without error."""
+    from engine.object_renderer import DistributionBoardRenderer
+    renderer = DistributionBoardRenderer(color=(0, 255, 255), thickness=2)
+    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    points = np.array([
+        [270, 190], [370, 190], [370, 290], [270, 290],
+        [280, 200], [360, 200], [360, 280], [280, 280],
+    ], dtype=np.float64)
+    result = renderer.draw(frame, points)
+    assert np.any(result != 0)
+
+
+def test_object_renderer_selects_distribution_board() -> None:
+    """ObjectRenderer must resolve 'distribution_board' to DistributionBoardRenderer, not fall back to cube."""
+    from config import RenderConfig
+    from engine.object_renderer import ObjectRenderer, DistributionBoardRenderer
+    config = RenderConfig(default_object="distribution_board")
+    renderer = ObjectRenderer(config)
+    assert renderer.object_type == "distribution_board"
+    assert isinstance(renderer._renderer, DistributionBoardRenderer)

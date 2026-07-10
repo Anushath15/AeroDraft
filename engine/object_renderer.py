@@ -94,7 +94,7 @@ class SwitchboardRenderer(BaseObjectRenderer):
     def draw(self, frame: np.ndarray, projected_points: np.ndarray) -> np.ndarray:
         points = self._validate_vertices(projected_points)
         
-        # Draw the front face (vertices 4,5,6,7 — top face when box is oriented)
+        # Draw the front face (vertices 4,5,6,7 â€” top face when box is oriented)
         front_face = [4, 5, 6, 7]
         front_loop = points[front_face].reshape(-1, 1, 2)
         cv2.polylines(frame, [front_loop], isClosed=True, color=self.color, thickness=self.thickness)
@@ -341,6 +341,54 @@ class ConduitBoxRenderer(BaseObjectRenderer):
         return frame
 
 
+class DistributionBoardRenderer(BaseObjectRenderer):
+    """
+    Renders a main power distribution board.
+
+    Features: rectangular enclosure, horizontal breaker row lines,
+    door handle indicator.
+    """
+
+    def draw(self, frame: np.ndarray, projected_points: np.ndarray) -> np.ndarray:
+        points = self._validate_vertices(projected_points)
+
+        front_face = [4, 5, 6, 7]
+        front_loop = points[front_face].reshape(-1, 1, 2)
+        cv2.polylines(frame, [front_loop], isClosed=True, color=self.color, thickness=self.thickness)
+
+        cx, cy = self._get_face_center(points, front_face)
+        fw, fh = self._get_face_size(points, front_face)
+
+        if fw < 20 or fh < 20:
+            return frame
+
+        # Breaker row lines (horizontal lines representing circuit breaker rows)
+        top_left = points[4]
+        top_right = points[5]
+        bottom_left = points[7]
+
+        num_rows = 4
+        for row in range(1, num_rows):
+            t = row / num_rows
+            y_offset = int((bottom_left[1] - top_left[1]) * t)
+            row_left_x = top_left[0]
+            row_right_x = top_right[0]
+            row_y = top_left[1] + y_offset
+            cv2.line(frame, (row_left_x, row_y), (row_right_x, row_y), self.color, self.thickness)
+
+        # Door handle indicator (small rectangle on the right edge)
+        handle_w = max(3, fw // 20)
+        handle_h = max(8, fh // 8)
+        handle_x = top_right[0] - handle_w * 2
+        handle_y = cy
+        cv2.rectangle(
+            frame,
+            (handle_x, handle_y - handle_h // 2),
+            (handle_x + handle_w, handle_y + handle_h // 2),
+            self.color, self.thickness
+        )
+
+        return frame
 class ObjectRenderer:
     """
     Factory and facade for object rendering.
@@ -361,6 +409,7 @@ class ObjectRenderer:
         "socket": SocketRenderer,
         "junction_box": JunctionBoxRenderer,
         "conduit_box": ConduitBoxRenderer,
+        "distribution_board": DistributionBoardRenderer,
     }
     
     def __init__(self, config: RenderConfig) -> None:
@@ -403,3 +452,5 @@ class ObjectRenderer:
             The annotated frame (same object as input).
         """
         return self._renderer.draw(frame, projected_points)
+   
+   
