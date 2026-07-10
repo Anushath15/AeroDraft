@@ -25,11 +25,21 @@ class TrackerConfig:
 
 
 @dataclass(frozen=True)
+class ASMEConfig:
+    """Settings for the Adaptive Spatial Mapping Engine (depth + filtering)."""
+    reference_distance_px: float = 120.0
+    one_euro_min_cutoff: float = 1.0
+    one_euro_beta: float = 0.007
+    one_euro_d_cutoff: float = 1.0
+
+
+@dataclass(frozen=True)
 class AppConfig:
     """Global application settings."""
     window_name: str = "AeroDraft"
     camera: CameraConfig = field(default_factory=CameraConfig)
     tracker: TrackerConfig = field(default_factory=TrackerConfig)
+    asme: ASMEConfig = field(default_factory=ASMEConfig)
 
 
 # Global singleton - import this everywhere
