@@ -29,8 +29,8 @@ def main() -> None:
                 logger.warning("Dropped frame - skipping.")
                 continue
 
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = tracker.process_frame(rgb_frame)
+            # process_frame handles BGR->RGB internally
+            results = tracker.process_frame(frame)
             annotated_frame = tracker.draw_landmarks(frame, results)
             cv2.imshow(settings.window_name, annotated_frame)
 
