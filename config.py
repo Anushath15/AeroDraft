@@ -106,6 +106,14 @@ class DemoConfig:
 
 
 @dataclass(frozen=True)
+class SketchConfig:
+    """Settings for mid-air freehand sketching mode."""
+    color_bgr: Tuple[int, int, int] = (255, 0, 255)  # Magenta - visually distinct from box colors
+    thickness: int = 2
+    min_point_distance: float = 0.01  # In virtual projection-space units
+
+
+@dataclass(frozen=True)
 class AppConfig:
     """Global application settings."""
     window_name: str = "AeroDraft"
@@ -118,6 +126,7 @@ class AppConfig:
     state_machine: StateMachineConfig = field(default_factory=StateMachineConfig)
     hud: HUDConfig = field(default_factory=HUDConfig)
     demo: DemoConfig = field(default_factory=DemoConfig)
+    sketch: SketchConfig = field(default_factory=SketchConfig)
 
 
 settings = AppConfig()
