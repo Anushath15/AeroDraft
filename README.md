@@ -1,16 +1,18 @@
 # ✈️ AeroDraft
 
-### AI-Powered Mid-Air Spatial Visualization using Computer Vision
+### AI-Powered Spatial Product Visualization for MSMEs
+
+> *Preview electrical hardware in your space before installation — using only a webcam and hand gestures.*
 
 <p align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
 ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?logo=opencv&logoColor=white)
-![MediaPipe](https://img.shields.io/badge/MediaPipe-Tasks-FF6F00)
-![PyTest](https://img.shields.io/badge/Tested-90%20Tests-success)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-Hands-FF6F00)
+![PyTest](https://img.shields.io/badge/Tests-132%20Passing-success)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)
 ![License](https://img.shields.io/badge/License-MIT-red)
-![Status](https://img.shields.io/badge/Status-Phase%2010%20Complete-success)
+![Status](https://img.shields.io/badge/Status-Phase%2012%20Complete-success)
 
 </p>
 
@@ -26,13 +28,30 @@ AeroDraft is an **Edge AI-based Human-Computer Interaction (HCI)** system that e
 
 Unlike traditional Augmented Reality systems, AeroDraft **does not require LiDAR, depth cameras, ARCore, SLAM, Unity, Unreal Engine, or OpenGL**. Instead, it combines modern Computer Vision techniques with geometric reasoning to estimate spatial information from a monocular RGB camera.
 
-The project demonstrates how **AI-powered perception**, **gesture recognition**, **signal processing**, and **real-time rendering** can work together to create an intuitive touch-free interaction system suitable for engineering visualization and industrial applications.
+The project demonstrates how **AI-powered perception**, **gesture recognition**, **signal processing**, and **real-time rendering** can work together to create an intuitive touch-free interaction system suitable for engineering visualization and **MSME product demonstrations**.
+
+---
+
+## 🏢 Business Applications
+
+AeroDraft is designed for real-world MSME demonstrations:
+
+| Industry | Use Case |
+|----------|----------|
+| **Electrical Hardware Shops** | Preview switchboards, distribution boards, and junction boxes on actual walls before purchase |
+| **Lighting Retailers** | Show customers exactly how LED ceiling lights will look in their rooms |
+| **Home Renovation** | Plan electrical layouts with accurate spatial placement before drilling or wiring |
+| **Interior Visualization** | Validate positioning, clearances, and aesthetics in real customer space |
+| **Product Placement** | Demonstrate cable management with PVC conduit boxes |
+| **Customer Demonstrations** | Interactive AR-style previews that build buyer confidence and reduce returns |
 
 ---
 
 ## 🎯 Vision
 
 > **"To make spatial interaction accessible on any computer using only AI and Computer Vision, eliminating the need for expensive AR hardware."**
+
+> **"See it before you install it."**
 
 ---
 
@@ -43,11 +62,14 @@ The project demonstrates how **AI-powered perception**, **gesture recognition**,
 - 🤏 Gesture recognition using geometric heuristics
 - 📐 Relative depth estimation from hand geometry
 - 🎯 One Euro Filter for smooth spatial tracking
-- 📦 Interactive 3D wireframe box rendering
-- 🧠 Gesture-driven finite state machine
-- 📊 Real-time HUD displaying FPS, gesture, state, and depth
+- 📦 **Interactive 3D wireframe rendering with 7 electrical products**
+- 🏷️ **Product catalog with business metadata (names, categories, dimensions)**
+- 🧠 Gesture-driven finite state machine with **visual state feedback**
+- 🔔 **Transient notification banners** (Object Placed, Hand Lost, Tracking Restored)
+- 📊 **Professional HUD** displaying FPS, gesture, state, depth, and product category
+- 🖥️ **Optional Demo Mode** with on-screen help panel for judges and visitors
 - ⚡ Optional performance benchmarking
-- 🧪 Comprehensive automated test suite
+- 🧪 **Comprehensive automated test suite (132 tests)**
 - 🏗️ Modular and extensible architecture
 - 💻 Runs entirely on CPU without dedicated graphics hardware
 
@@ -55,9 +77,9 @@ The project demonstrates how **AI-powered perception**, **gesture recognition**,
 
 # 📌 Current Project Status
 
-## Phase 10 — Full System Integration ✅
+## Phase 12 — MSME Demo Experience ✅
 
-AeroDraft has been successfully integrated into a complete end-to-end Computer Vision pipeline.
+AeroDraft has evolved from a technology demonstration into a **polished MSME product visualization tool**.
 
 | Component | Status |
 |------------|--------|
@@ -70,21 +92,23 @@ AeroDraft has been successfully integrated into a complete end-to-end Computer V
 | Coordinate Smoothing | ✅ Complete |
 | Gesture State Machine | ✅ Complete |
 | Perspective Projection | ✅ Complete |
-| Wireframe Renderer | ✅ Complete |
-| HUD Overlay | ✅ Complete |
+| **Object Renderer (7 Products)** | ✅ Complete |
+| **Product Catalog** | ✅ Complete |
+| **Professional HUD with Notifications** | ✅ Complete |
+| **Demo Help Panel** | ✅ Complete |
 | Performance Benchmarking | ✅ Complete |
 | Configuration System | ✅ Complete |
 | Integration Pipeline | ✅ Complete |
-| Automated Testing | ✅ Complete |
+| Automated Testing | ✅ Complete (132 tests) |
 
 ---
 
 ## ✅ Verified Results
 
-- ✔ 90 automated tests passing
+- ✔ **132 automated tests passing**
 - ✔ End-to-end pipeline integrated
 - ✔ Stable webcam operation
-- ✔ Real-time rendering
+- ✔ Real-time rendering with state-based colors
 - ✔ Clean application shutdown
 - ✔ Modular architecture
 - ✔ Production-ready code structure
@@ -95,14 +119,14 @@ AeroDraft has been successfully integrated into a complete end-to-end Computer V
 ## Current Processing Pipeline
 
 1. Capture RGB frames from webcam
-2. Detect hand landmarks using MediaPipe
+2. Detect hand landmarks using MediaPipe (21 landmarks)
 3. Estimate relative hand depth
-4. Smooth spatial coordinates
-5. Classify user gestures
-6. Update interaction state machine
-7. Project 3D geometry into image space
-8. Render wireframe objects
-9. Display HUD information
+4. Smooth spatial coordinates with One Euro Filter
+5. Classify user gestures (Pinch / Fist / Open Palm)
+6. Update interaction state machine (IDLE → DRAWING → PLACED → LOCKED)
+7. Project 3D product geometry into image space
+8. Render specialized wireframe object with state-based colors
+9. Display professional HUD with telemetry and notifications
 10. Repeat for every frame
 
 ---
@@ -140,7 +164,7 @@ AeroDraft has been successfully integrated into a complete end-to-end Computer V
           Perspective Projection Engine
                         │
                         ▼
-          OpenCV Wireframe Renderer
+          Object Renderer (Product Catalog)
                         │
                         ▼
              HUD Renderer + Display
@@ -175,7 +199,7 @@ State Machine
 3D Projection
     │
     ▼
-Wireframe Rendering
+Object Rendering
     │
     ▼
 HUD Overlay
@@ -242,8 +266,10 @@ AeroDraft/
 │
 ├── engine/
 │   ├── __init__.py
+│   ├── catalog.py               # Product catalog (Phase 12)
+│   ├── object_renderer.py       # Specialized wireframe renderers (Phase 12)
 │   ├── projection.py            # Perspective projection engine
-│   └── wireframe_renderer.py    # OpenCV wireframe renderer
+│   └── wireframe_renderer.py    # Base wireframe renderer
 │
 ├── gestures/
 │   ├── __init__.py
@@ -252,10 +278,23 @@ AeroDraft/
 │
 ├── ui/
 │   ├── __init__.py
-│   └── hud_renderer.py          # Heads-Up Display (HUD)
+│   └── hud_renderer.py          # Professional HUD with notifications (Phase 12)
 │
 └── tests/
-    ├── ...                      # Automated unit tests
+    ├── test_benchmark.py
+    ├── test_camera.py
+    ├── test_catalog.py            # Product catalog tests (Phase 12)
+    ├── test_coordinate_filter.py
+    ├── test_depth_estimator.py
+    ├── test_gesture_classifier.py
+    ├── test_hand_tracker.py
+    ├── test_hud_renderer.py       # HUD + notification tests (Phase 12)
+    ├── test_object_renderer.py    # Object renderer tests (Phase 12)
+    ├── test_one_euro_filter.py
+    ├── test_pipeline.py
+    ├── test_projection.py
+    ├── test_state_machine.py
+    └── test_wireframe_renderer.py
 ```
 
 ---
@@ -271,8 +310,9 @@ AeroDraft/
 | `coordinate_filter.py` | Smooths noisy hand coordinates |
 | `state_machine.py` | Maintains interaction states |
 | `projection.py` | Projects 3D coordinates into 2D image space |
-| `wireframe_renderer.py` | Draws interactive 3D objects |
-| `hud_renderer.py` | Displays runtime information |
+| `object_renderer.py` | Routes object types to specialized wireframe renderers |
+| `catalog.py` | Business metadata registry for all products |
+| `hud_renderer.py` | Displays runtime information, notifications, and demo panel |
 | `benchmark.py` | Performance monitoring |
 | `config.py` | Centralized immutable configuration |
 
@@ -293,13 +333,40 @@ AeroDraft follows modern software engineering practices:
 
 Each module can be independently tested, maintained, and extended.
 
+---
+
+# 🏷️ Product Catalog
+
+AeroDraft includes **7 industry-standard products** rendered with OpenCV wireframes:
+
+| # | Product | Category | Dimensions (W×H×D) |
+|---|---------|----------|-------------------|
+| 1 | Wireframe Cube | Demo | 20 × 20 × 20 cm |
+| 2 | **Electrical Switchboard** | Electrical | 30 × 30 × 10 cm |
+| 3 | **Wall Socket** | Electrical | 8 × 8 × 5 cm |
+| 4 | **LED Ceiling Light** | Lighting | 25 × 25 × 5 cm |
+| 5 | **Junction Box** | Electrical | 10 × 10 × 5 cm |
+| 6 | **PVC Conduit Box** | Conduit | 15 × 15 × 10 cm |
+| 7 | **Distribution Board** | Electrical | 40 × 50 × 15 cm |
+
+Each product renders with **category-appropriate detail**:
+- **Distribution Board** — breaker row lines on the front face
+- **Switchboard** — door seam rectangle on the front face
+- **LED Ceiling Light** — cross-pattern panel lines
+- **Wall Socket** — vertical center line for outlet holes
+- **Junction Box** — lid seam line
+- **PVC Conduit Box** — conduit entry point dots on edges
+
+No external 3D models are required. All rendering uses OpenCV primitives.
+
+---
+
 # ⚙️ Installation
 
 ## 1️⃣ Clone the Repository
 
 ```bash
 git clone https://github.com/Anushath15/AeroDraft.git
-
 cd AeroDraft
 ```
 
@@ -311,7 +378,6 @@ cd AeroDraft
 
 ```bash
 python -m venv .venv
-
 .venv\Scripts\activate
 ```
 
@@ -319,7 +385,6 @@ python -m venv .venv
 
 ```bash
 python -m venv .venv
-
 source .venv/bin/activate
 ```
 
@@ -333,7 +398,7 @@ For development:
 pip install -r requirements-dev.txt
 ```
 
-or install the package directly:
+Or install the package directly:
 
 ```bash
 pip install -e .
@@ -345,28 +410,17 @@ pip install -e .
 
 AeroDraft requires the **MediaPipe Hand Landmarker** model.
 
-Download:
+Download: https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
 
-https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
-
-Place the downloaded file:
-
-```text
-hand_landmarker.task
-```
-
-inside the project root.
-
-Example:
+Place the downloaded file `hand_landmarker.task` inside the project root.
 
 ```text
 AeroDraft/
-
-hand_landmarker.task
-main.py
-camera.py
-config.py
-...
+├── hand_landmarker.task
+├── main.py
+├── camera.py
+├── config.py
+└── ...
 ```
 
 > **Note:** The model file is intentionally excluded from Git because it is a third-party asset.
@@ -380,15 +434,17 @@ config.py
 - OpenCV-compatible camera
 - MediaPipe Hand Landmarker model
 
+---
+
 # ▶️ Running AeroDraft
 
-Start the application using:
+Start the application:
 
 ```bash
 python -m main
 ```
 
-or, if installed as a package:
+Or, if installed as a package:
 
 ```bash
 aerodraft
@@ -401,43 +457,65 @@ aerodraft
 Once the application starts:
 
 - Live webcam feed
-- Hand landmarks
-- Gesture detection
-- Wireframe 3D box
-- Current interaction state
-- FPS counter
-- Relative depth estimation
+- Hand landmarks overlay
+- Gesture detection status
+- **Specialized 3D wireframe product** (default: cube)
+- Current interaction state with **color-coded feedback**
+- **Product name and category** in the HUD
+- FPS counter and relative depth estimation
+- **Transient notification banners** for key events
 - Runtime diagnostics
 
 ---
 
 ## 🎮 Controls
 
-| Gesture | Action |
-|----------|--------|
-| 🤏 PINCH | Draw / Select box |
-| ✋ OPEN PALM | Reset / Cancel |
-| ✊ FIST | Lock object (hold for 1 second) |
+| Input | Action |
+|-------|--------|
+| **Pinch** (thumb + index) | Place / start drawing the object |
+| **Move Hand** | Position the object in 3D space |
+| **Fist** | Lock / confirm placement |
+| **Open Palm** | Reset to idle |
+| **Keys 1–7** | Switch product instantly |
+| **Q / ESC** | Exit application |
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## 🎨 Visual Feedback
 
-| Key | Action |
-|-----|--------|
-| **Q** | Quit application |
-| **ESC** | Quit application |
-| **Ctrl+C** | Graceful shutdown |
+| State | Color | Meaning |
+|-------|-------|---------|
+| **IDLE** | Gray | Ready to place |
+| **DRAWING** | Yellow | Object is being positioned |
+| **PLACED** | Green | Object positioned, awaiting lock |
+| **LOCKED** | Blue | Placement confirmed |
+
+Transient banners appear for key events:
+- `✓ OBJECT PLACED` — when placement completes
+- `✓ OBJECT LOCKED` — when fist confirms placement
+- `⚠ HAND LOST` — when tracking is interrupted
+- `✓ TRACKING RESTORED` — when hand re-enters frame
 
 ---
 
-# ⚙️ Configuration
+## 🖥️ Demo Mode
 
-AeroDraft uses immutable configuration dataclasses defined in:
+Enable the **MSME Demo Panel** by setting in `config.py`:
 
-```text
-config.py
+```python
+demo: DemoConfig = field(default_factory=lambda: DemoConfig(enabled=True))
 ```
+
+This displays a persistent help panel showing:
+- The demo scenario context
+- Control instructions for judges and visitors
+- Current product category and status
+
+---
+
+## ⚙️ Configuration
+
+AeroDraft uses immutable configuration dataclasses defined in `config.py`.
 
 Most runtime parameters can be adjusted without modifying application logic.
 
@@ -452,6 +530,7 @@ Most runtime parameters can be adjusted without modifying application logic.
 | Pinch Start Threshold | 0.15 | Gesture activation threshold |
 | Pinch Release Threshold | 0.30 | Gesture release threshold |
 | Lock Hold Duration | 1.0 sec | Time required to lock an object |
+| Default Object | cube | Starting product (cube, switchboard, socket, etc.) |
 
 ---
 
@@ -489,23 +568,23 @@ These logs simplify debugging and performance analysis.
 
 # 🧪 Testing
 
-AeroDraft includes a comprehensive automated test suite covering the core Computer Vision pipeline, mathematical computations, gesture recognition, state management, and rendering logic.
+AeroDraft includes a comprehensive automated test suite covering the core Computer Vision pipeline, mathematical computations, gesture recognition, state management, rendering logic, and product catalog.
 
 ## Running the Test Suite
 
 ```bash
+# Run all tests
 pytest
-```
 
-Run with verbose output:
-
-```bash
+# Run with verbose output
 pytest -v
-```
 
-Generate a coverage report (if `pytest-cov` is installed):
+# Run specific modules
+pytest tests/test_catalog.py -v
+pytest tests/test_hud_renderer.py -v
+pytest tests/test_object_renderer.py -v
 
-```bash
+# Generate coverage report
 pytest --cov
 ```
 
@@ -523,25 +602,49 @@ The automated tests verify:
 * Coordinate filtering
 * One Euro Filter behavior
 * Perspective projection
-* Wireframe rendering
-* HUD rendering
+* **Object rendering (7 products)**
+* **Product catalog metadata**
+* **HUD rendering and notifications**
 * Configuration validation
 * Benchmark utilities
+* End-to-end pipeline data flow
 
 The test suite is designed so that most tests can run without requiring a physical webcam by using mocked components where appropriate.
 
 ---
 
+## Test Summary
+
+| Module | Tests | Focus |
+|--------|-------|-------|
+| `test_benchmark` | 7 | Performance timing |
+| `test_camera` | 5 | Video stream capture |
+| `test_catalog` | 11 | Product metadata registry |
+| `test_coordinate_filter` | 1 | Spatial smoothing |
+| `test_depth_estimator` | 7 | ASME depth calculation |
+| `test_gesture_classifier` | 10 | Pinch/fist/palm detection |
+| `test_hand_tracker` | 4 | MediaPipe integration |
+| `test_hud_renderer` | 35 | Overlay rendering & notifications |
+| `test_object_renderer` | 18 | Wireframe primitives |
+| `test_one_euro_filter` | 7 | Signal smoothing |
+| `test_pipeline` | 1 | End-to-end data flow |
+| `test_projection` | 9 | 3D→2D perspective math |
+| `test_state_machine` | 11 | Gesture-driven state transitions |
+| `test_wireframe_renderer` | 6 | Base cube rendering |
+| **Total** | **132** | **Full system coverage** |
+
+---
+
 # 🔍 Troubleshooting
 
-| Problem                       | Possible Cause                      | Solution                                                                     |
-| ----------------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
-| Camera cannot be opened       | Incorrect camera index              | Update `camera.device_index` in `config.py`                                  |
-| Model file not found          | Missing `hand_landmarker.task`      | Download the model and place it in the project root                          |
-| Low FPS                       | CPU limitations                     | Reduce camera resolution in `config.py`                                      |
-| Gesture flickering            | Thresholds too sensitive            | Adjust gesture thresholds in `config.py`                                     |
-| Box movement is unstable      | Filtering disabled or misconfigured | Verify the coordinate filter configuration                                   |
-| Application exits immediately | Webcam access denied                | Check camera permissions and ensure no other application is using the camera |
+| Problem | Possible Cause | Solution |
+|---------|---------------|----------|
+| Camera cannot be opened | Incorrect camera index | Update `camera.device_index` in `config.py` |
+| Model file not found | Missing `hand_landmarker.task` | Download the model and place it in the project root |
+| Low FPS | CPU limitations | Reduce camera resolution in `config.py` |
+| Gesture flickering | Thresholds too sensitive | Adjust gesture thresholds in `config.py` |
+| Box movement is unstable | Filtering disabled or misconfigured | Verify the coordinate filter configuration |
+| Application exits immediately | Webcam access denied | Check camera permissions and ensure no other application is using the camera |
 
 ---
 
@@ -571,6 +674,16 @@ These metrics can be used to evaluate deployment on target hardware.
 
 AeroDraft follows a modular architecture, making it straightforward to extend individual components without affecting the rest of the pipeline.
 
+## Adding a New Product
+
+1. Add a new `ProductInfo` entry to `engine/catalog.py`.
+2. Create a specialized renderer class in `engine/object_renderer.py` (or reuse `CubeRenderer`).
+3. Register the renderer in `ObjectRenderer._renderers`.
+4. Add a selection key in `main.py` (e.g., `elif key == ord("8")`).
+5. Add unit tests covering the new renderer.
+
+---
+
 ## Adding a New Gesture
 
 1. Add a new value to the `GestureType` enumeration.
@@ -586,7 +699,7 @@ AeroDraft follows a modular architecture, making it straightforward to extend in
 1. Add a new value to `BoxState`.
 2. Implement the corresponding state handler.
 3. Define valid transitions.
-4. Update rendering behavior if required.
+4. Update rendering behavior and `state_colors` in `config.py` if required.
 5. Add unit tests for all new transitions.
 
 ---
@@ -642,7 +755,7 @@ State Machine
 3D Projection
       │
       ▼
-Rendering
+Object Rendering
       │
       ▼
 HUD Display
@@ -659,11 +772,13 @@ The project prioritizes:
 * Extensibility
 * Real-time performance
 * Production-quality engineering
+* **Business demonstration value**
+
 # 🗺️ Roadmap
 
 The core Computer Vision system is complete. Future work focuses on expanding capabilities rather than rebuilding the existing architecture.
 
-## Current Release (v0.10)
+## Current Release (v0.12)
 
 * ✅ Webcam pipeline
 * ✅ MediaPipe hand tracking
@@ -673,10 +788,12 @@ The core Computer Vision system is complete. Future work focuses on expanding ca
 * ✅ Coordinate smoothing
 * ✅ Gesture state machine
 * ✅ Perspective projection
-* ✅ Wireframe rendering
-* ✅ HUD overlay
+* ✅ **Object renderer with 7 electrical products**
+* ✅ **Product catalog with business metadata**
+* ✅ **Professional HUD with notifications**
+* ✅ **Demo help panel**
 * ✅ Performance benchmarking
-* ✅ Automated testing
+* ✅ **132 automated tests**
 
 ---
 
@@ -817,6 +934,8 @@ Their contributions to the open-source ecosystem have made projects like AeroDra
 
 > **"AeroDraft aims to redefine human-computer interaction by enabling intuitive, touch-free spatial visualization through AI-powered Computer Vision, making advanced engineering interaction accessible using only a standard webcam."**
 
+> **"See it before you install it."**
+
 ---
 
 # 📌 Project Highlights
@@ -829,6 +948,8 @@ Their contributions to the open-source ecosystem have made projects like AeroDra
 * Signal Processing
 * Spatial Computing
 * Engineering Visualization
+* **MSME Product Demonstration**
+* **Professional Demo Experience**
 * Modular Software Engineering
 * Production-quality Python Architecture
 
