@@ -67,6 +67,7 @@ class StateMachineConfig:
     lock_hold_duration_s: float = 1.0
     default_box_half_extents: Tuple[float, float, float] = (0.1, 0.1, 0.1)
 
+
 @dataclass(frozen=True)
 class HUDConfig:
     """Layout and styling for the heads-up display overlay."""
@@ -94,6 +95,7 @@ class AppConfig:
     box: BoxConfig = field(default_factory=BoxConfig)
     gesture: GestureConfig = field(default_factory=GestureConfig)
     state_machine: StateMachineConfig = field(default_factory=StateMachineConfig)
+    hud: HUDConfig = field(default_factory=HUDConfig)
 
 
 # Global singleton
