@@ -1,5 +1,5 @@
 """
-AeroDraft — Master entry point.
+AeroDraft - Master entry point.
 Orchestrates the camera stream, hand tracking inference,
 and frame rendering. No business logic lives here.
 """
@@ -13,7 +13,7 @@ from hand_tracker import HandTracker
 
 def main() -> None:
     """Runs the core application loop."""
-    logger.info("AeroDraft starting — Phase 1 (Camera + Hand Tracking)")
+    logger.info("AeroDraft starting - Phase 1 (Camera + Hand Tracking)")
 
     with VideoStream(
         device_index=settings.camera.device_index,
@@ -21,27 +21,19 @@ def main() -> None:
         height=settings.camera.height,
     ) as stream, HandTracker(config=settings.tracker) as tracker:
 
-        logger.info("Pipeline active. Press 'Q' or ESC to exit.")
+        logger.info("Pipeline active. Press Q or ESC to exit.")
 
         while True:
             success, frame = stream.read_frame()
             if not success:
-                logger.warning("Dropped frame — skipping.")
+                logger.warning("Dropped frame - skipping.")
                 continue
 
-            # MediaPipe requires RGB
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Inference
             results = tracker.process_frame(rgb_frame)
-
-            # Render landmarks onto the original BGR frame
             annotated_frame = tracker.draw_landmarks(frame, results)
-
-            # Display
             cv2.imshow(settings.window_name, annotated_frame)
 
-            # Exit
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q") or key == 27:
                 logger.info("Exit signal received.")

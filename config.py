@@ -1,5 +1,8 @@
-import sys, os
-sys.path.insert(0, os.path.dirname(__file__))
+"""
+Central configuration module for AeroDraft.
+All hardcoded values live here as immutable frozen dataclasses.
+No other module should define magic numbers.
+"""
 from dataclasses import dataclass, field
 
 
@@ -29,5 +32,5 @@ class AppConfig:
     tracker: TrackerConfig = field(default_factory=TrackerConfig)
 
 
-# Global singleton — import this everywhere
+# Global singleton - import this everywhere
 settings = AppConfig()
