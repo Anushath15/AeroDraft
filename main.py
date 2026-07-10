@@ -1,54 +1,82 @@
-"""
-AeroDraft - Master entry point.
-Orchestrates the camera stream, hand tracking inference,
-and frame rendering. No business logic lives here.
-"""
-import sys
-import cv2
+"""Orchestrator for the AeroDraft spatial pipeline."""
+import time
+import numpy as np
 from loguru import logger
+import cv2
 from config import settings
 from camera import VideoStream
 from hand_tracker import HandTracker
+from core.depth_estimator import DepthEstimator, NoHandDetectedError
+from core.coordinate_filter import CoordinateFilter
+from engine.projection import PerspectiveProjector, InvalidDepthError
+from engine.wireframe_renderer import WireframeRenderer
+from gestures.gesture_classifier import GestureClassifier
+from gestures.state_machine import StateMachine, InteractionState
 
+class AeroDraftPipeline:
+    def __init__(self):
+        # Initialize components
+        self.tracker = HandTracker(settings.tracker)
+        self.depth_estimator = DepthEstimator(settings.asme)
+        self.coord_filter = CoordinateFilter(settings.asme)
+        self.projector = PerspectiveProjector(
+            settings.render.focal_length, settings.camera.width, settings.camera.height
+        )
+        self.renderer = WireframeRenderer(
+            settings.render.box_color_bgr, settings.render.line_thickness
+        )
+        self.classifier = GestureClassifier(settings.gesture)
+        self.state_machine = StateMachine()
 
-def main() -> None:
-    """Runs the core application loop."""
-    logger.info("AeroDraft starting - Phase 1 (Camera + Hand Tracking)")
+    def run(self):
+        with VideoStream(settings.camera.device_index, settings.camera.width, settings.camera.height) as stream, \
+             self.tracker as tracker:
+            
+            logger.info("Pipeline active. Press Q or ESC to exit.")
+            
+            while True:
+                success, frame = stream.read_frame()
+                if not success: continue
 
-    with VideoStream(
-        device_index=settings.camera.device_index,
-        width=settings.camera.width,
-        height=settings.camera.height,
-    ) as stream, HandTracker(config=settings.tracker) as tracker:
+                results = tracker.process_frame(frame)
+                
+                if results and results.hand_landmarks:
+                    try:
+                        # 1. Extraction
+                        hand = results.hand_landmarks[0]
+                        wrist, index_mcp, index_tip, thumb_tip = hand[0], hand[5], hand[8], hand[4]
+                        
+                        # 2. Gesture and State
+                        is_pinched = self.classifier.is_pinch(wrist, index_mcp, index_tip, thumb_tip)
+                        self.state_machine.update(is_pinched, (wrist.x, wrist.y))
+                        
+                        # 3. Coordinate Filtering
+                        ts = time.time()
+                        pseudo_depth = self.depth_estimator.estimate(hand, settings.camera.width, settings.camera.height, ts)
+                        f_x, f_y, f_z = self.coord_filter(wrist.x, wrist.y, pseudo_depth, ts)
+                        
+                        # 4. State-based positioning
+                        if self.state_machine.state == InteractionState.ANCHORED:
+                            cx, cy, cz = self.state_machine.anchor_pos[0], self.state_machine.anchor_pos[1], f_z
+                        else:
+                            cx, cy, cz = (f_x - 0.5) * 2.0, (f_y - 0.5) * 2.0, f_z
 
-        logger.info("Pipeline active. Press Q or ESC to exit.")
+                        # 5. Projection & Rendering
+                        points_2d = self.projector.project_box(
+                            np.array([cx, cy, cz]), 
+                            np.array([settings.box.width, settings.box.height, settings.box.depth])
+                        )
+                        frame = self.renderer.draw_box(frame, points_2d)
+                        
+                    except (NoHandDetectedError, InvalidDepthError) as e:
+                        logger.trace(f"Pipeline skip: {e}")
+                    except Exception as e:
+                        logger.error(f"Pipeline error: {e}")
 
-        while True:
-            success, frame = stream.read_frame()
-            if not success:
-                logger.warning("Dropped frame - skipping.")
-                continue
+                # 6. Skeleton Visualization (Debugging Overlay)
+                frame = self.tracker.draw_landmarks(frame, results)
+                cv2.imshow(settings.window_name, frame)
 
-            # process_frame handles BGR->RGB internally
-            results = tracker.process_frame(frame)
-            annotated_frame = tracker.draw_landmarks(frame, results)
-            cv2.imshow(settings.window_name, annotated_frame)
-
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q") or key == 27:
-                logger.info("Exit signal received.")
-                break
-
-    cv2.destroyAllWindows()
-    logger.info("AeroDraft shutdown complete.")
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except RuntimeError as e:
-        logger.critical(f"Hardware error: {e}")
-        sys.exit(1)
-    except Exception as e:
-        logger.critical(f"Unexpected crash: {e}")
-        sys.exit(1)
+                if cv2.waitKey(1) & 0xFF in [ord("q"), 27]:
+                    break
+        cv2.destroyAllWindows()

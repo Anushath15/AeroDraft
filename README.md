@@ -23,6 +23,13 @@ scope for this code.
 
 That's it. No spatial reasoning, no object placement, no filtering
 pipeline beyond what MediaPipe does internally.
+## Phase 2: Integrated Pipeline
+This phase integrates the core ASME and rendering engines into the main loop:
+1. **Hand Tracking**: Extracts wrist coordinates.
+2. **DepthEstimation**: Computes the Z-coordinate proxy using the ASME heuristic (relative pixel scaling).
+3. **Filtering**: Applies the 1-Euro Filter to stabilize the Z value.
+4. **Projection**: Maps the 3D cuboid coordinates into 2D screen space using perspective projection.
+5. **Rendering**: Draws the resulting wireframe on the live webcam feed.
 
 ## Project Structure
 
