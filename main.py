@@ -31,6 +31,13 @@ from gestures.state_machine import GestureStateMachine, BoxState
 from ui.hud_renderer import HUDRenderer, HUDData
 from core.benchmark import benchmark, print_report
 
+# ═══════════════════════════════════════════════════════════════════
+# ADDITION 1 — API imports
+# ═══════════════════════════════════════════════════════════════════
+from api.server import start_api_server
+from api.shared_state import shared_state, command_queue
+
+
 try:
     from core.coordinate_filter import CoordinateFilter
     _HAS_COORDINATE_FILTER = True
@@ -167,6 +174,12 @@ def main() -> None:
     """Runs the integrated AeroDraft application loop."""
     logger.info("AeroDraft starting - Phase 13 (Mid-Air Sketching)")
 
+    # ═══════════════════════════════════════════════════════════════════
+    # ADDITION 2 — Start REST API server
+    # ═══════════════════════════════════════════════════════════════════
+    start_api_server(host="0.0.0.0", port=8000)
+    logger.info("REST API started — http://localhost:8000  |  docs: http://localhost:8000/docs")
+
     _validate_config()
 
     hud_renderer = HUDRenderer(settings.hud)
@@ -207,6 +220,12 @@ def main() -> None:
     last_frame_time = time.perf_counter()
     last_fps_update_time = time.perf_counter()
 
+    # ═══════════════════════════════════════════════════════════════════
+    # ADDITION 2 (continued) — API timing & screenshot flag
+    # ═══════════════════════════════════════════════════════════════════
+    _start_time = time.perf_counter()
+    _api_screenshot_pending = False
+
     try:
         with VideoStream(
             device_index=settings.camera.device_index,
@@ -218,6 +237,8 @@ def main() -> None:
             logger.info("Keys: 1-7 switch objects | D toggle demo panel | S toggle sketch mode | C clear sketch")
 
             while True:
+                key = 0xFF
+                
                 with benchmark("camera_read"):
                     success, frame = stream.read_frame()
 
@@ -227,6 +248,34 @@ def main() -> None:
 
                 frame_height, frame_width = frame.shape[:2]
                 current_time = time.perf_counter()
+
+                # ═══════════════════════════════════════════════════════════
+                # ADDITION 3 — Process API commands (from Postman / REST clients)
+                # ═══════════════════════════════════════════════════════════
+                while not command_queue.empty():
+                    try:
+                        cmd = command_queue.get_nowait()
+                        cmd_type = cmd.get("type")
+
+                        if cmd_type == "switch_product":
+                            current_object_type = cmd["value"]
+                            logger.info(f"API: switched product to '{current_object_type}'")
+
+                        elif cmd_type == "toggle_demo":
+                            demo_config = dataclasses.replace(
+                                demo_config, enabled=not demo_config.enabled
+                            )
+                            logger.info(f"API: demo mode {'ON' if demo_config.enabled else 'OFF'}")
+
+                        elif cmd_type == "screenshot":
+                            _api_screenshot_pending = True
+
+                        elif cmd_type == "reset":
+                            state_machine.reset()
+                            logger.info("API: state machine reset to IDLE")
+
+                    except Exception as _cmd_err:
+                        logger.warning(f"API command error: {_cmd_err}")
 
                 frame_delta = current_time - last_frame_time
                 last_frame_time = current_time
@@ -288,9 +337,6 @@ def main() -> None:
                             logger.warning(f"Gesture classification failed: {e}")
                             gesture = GestureType.NONE
 
-                    # Reference point differs by mode: wrist for object
-                    # placement (stable across gestures), pinch-tip
-                    # midpoint for sketching (the actual 'pen tip').
                     if sketch_mode:
                         hand_px, hand_py = _extract_pinch_tip_position(
                             hand_landmarks, frame_width, frame_height
@@ -329,8 +375,6 @@ def main() -> None:
                                 logger.debug(f"Coordinate smoothing failed: {e}")
 
                     if sketch_mode:
-                        # Sketch Mode: PINCH adds points to the active stroke,
-                        # tracked at the pinch-tip position computed above.
                         is_pinching = gesture == GestureType.PINCH
                         if is_pinching:
                             if not was_sketch_pinching:
@@ -343,8 +387,6 @@ def main() -> None:
                         was_sketch_pinching = is_pinching
 
                     else:
-                        # Object Mode: existing pinch-draw-place-lock flow,
-                        # tracked at the wrist position computed above.
                         hand_virtual = np.array([smoothed_x, smoothed_y])
                         with benchmark("state_machine"):
                             try:
@@ -391,9 +433,6 @@ def main() -> None:
                                 except Exception as e:
                                     logger.warning(f"Object rendering failed: {e}")
 
-                # Render sketch strokes (drawn regardless of current mode
-                # so existing strokes stay visible after toggling back to
-                # Object Mode mid-session).
                 if sketch_manager.strokes:
                     with benchmark("sketch_rendering"):
                         projected_strokes: List[np.ndarray] = []
@@ -430,6 +469,30 @@ def main() -> None:
                         demo_mode=demo_config.enabled,
                     )
                     annotated = hud_renderer.render(frame, hud_data)
+
+                # ═══════════════════════════════════════════════════════════
+                # ADDITION 4 — Update shared state for REST API + screenshot
+                # ═══════════════════════════════════════════════════════════
+                shared_state.update(
+                    tracking=hand_detected,
+                    gesture=gesture.name if gesture else "NONE",
+                    box_state=current_state.name,
+                    object_type=current_object_type,
+                    category=category,
+                    fps=fps,
+                    depth=smoothed_depth,
+                    hand_position=(hand_px, hand_py) if hand_detected else None,
+                    demo_mode=demo_config.enabled,
+                    notification=notification.text,
+                    uptime_seconds=time.perf_counter() - _start_time,
+                )
+
+                if _api_screenshot_pending or key == ord("s"):
+                    _fname = f"aerodraft_{int(time.time())}.png"
+                    cv2.imwrite(_fname, annotated)
+                    logger.info(f"Screenshot saved: {_fname}")
+                    notification.trigger("SCREENSHOT SAVED", (0, 255, 0))
+                    _api_screenshot_pending = False
 
                 cv2.imshow(settings.window_name, annotated)
 
