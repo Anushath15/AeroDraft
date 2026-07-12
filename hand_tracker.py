@@ -6,7 +6,6 @@ Isolates all AI logic from camera I/O and rendering.
 from __future__ import annotations
 from types import TracebackType
 from typing import Any, Optional, Type
-import time
 
 import cv2
 import mediapipe as mp
@@ -27,15 +26,17 @@ class HandTracker:
 
     def __enter__(self) -> HandTracker:
         base_options = mp_python.BaseOptions(model_asset_path=self.MODEL_PATH)
+        running_mode = mp_vision.RunningMode.IMAGE if self._config.static_image_mode else mp_vision.RunningMode.VIDEO
         options = mp_vision.HandLandmarkerOptions(
             base_options=base_options,
             num_hands=self._config.max_num_hands,
             min_hand_detection_confidence=self._config.min_detection_confidence,
             min_tracking_confidence=self._config.min_tracking_confidence,
-            running_mode=mp_vision.RunningMode.VIDEO,
+            running_mode=running_mode,
         )
         self._detector = mp_vision.HandLandmarker.create_from_options(options)
-        logger.info("MediaPipe HandLandmarker initialized (VIDEO mode).")
+        mode_str = "IMAGE" if self._config.static_image_mode else "VIDEO"
+        logger.info(f"MediaPipe HandLandmarker initialized ({mode_str} mode).")
         return self
 
     def __exit__(self, exc_type: Optional[Type[BaseException]], exc_value: Optional[BaseException], traceback: Optional[TracebackType]) -> None:
@@ -47,11 +48,10 @@ class HandTracker:
     def process_frame(self, bgr_frame: np.ndarray, timestamp_ms: Optional[int] = None) -> Any:
         if self._detector is None:
             raise RuntimeError("HandTracker not initialized. Use a with block.")
-        if timestamp_ms is None:
-            timestamp_ms = int(time.perf_counter() * 1000)
         rgb_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-        return self._detector.detect(mp_image, timestamp_ms)
+        # In VIDEO mode, timestamp is handled internally by MediaPipe
+        return self._detector.detect(mp_image)
 
     def draw_landmarks(self, bgr_image: np.ndarray, results: Any) -> np.ndarray:
         if not results or not results.hand_landmarks:

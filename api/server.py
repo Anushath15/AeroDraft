@@ -11,11 +11,12 @@ VALID_PRODUCTS = {"cube", "switchboard", "socket", "ceiling_light", "junction_bo
 _start_time = time.time()
 
 def _get(attr, default=None):
-    if hasattr(shared_state, '_data'):
-        return shared_state._data.get(attr, default)
-    if hasattr(shared_state, '_state'):
-        return shared_state._state.get(attr, default)
-    return getattr(shared_state, attr, default)
+    """Retrieve a field from shared state snapshot."""
+    try:
+        snapshot = shared_state.snapshot()
+        return snapshot.get(attr, default)
+    except Exception:
+        return default
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -46,7 +47,7 @@ async def get_products():
     for key in VALID_PRODUCTS:
         info = ProductCatalog.get(key)
         if info:
-            products.append({"key": key, "display_name": getattr(info, 'display_name', getattr(info, 'name', key)), "category": getattr(info, 'category', 'Unknown'), "dimensions": getattr(info, 'dimensions', (0,0,0))})
+            products.append({"key": key, "display_name": getattr(info, 'display_name', getattr(info, 'name', key)), "category": getattr(info, 'category', 'Unknown'), "dimensions_cm": getattr(info, 'dimensions', (0,0,0))})
     return {"total": len(products), "products": products}
 
 @app.post("/product")
